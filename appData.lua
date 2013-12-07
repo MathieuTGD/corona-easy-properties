@@ -6,22 +6,14 @@
 
 print("[[appData]] loaded...")
 
+
 appData = {}
 local json = require('json')
 
--- Set global data here
-local appGlobalData = {
-	version = "1.0",
-	appName = "betaProperties"
-}
-
--- Set Default state data (will be used the first time the app runs)
-local stateDefault = {
-	appRunCount = 0
-}
+local initData = require "appDataInit"
+local appGlobalData = initData.appGlobalData
+local stateDefault = initData.stateDefault
 local stateData
-
-
 
 -- Forward References
 local doesFileExist
@@ -34,7 +26,7 @@ local doesFileExist
 -- appData functions
 ----------------------------
 
-function appData.new()
+function appData.init()
 	appData.globals = appGlobalData
 	appData.state = appData:fetchState()
 	return appData
@@ -79,21 +71,25 @@ function appData:getGlobal (key)
 	if appData.globals[key] then 
 		return appData.globals[key]
 	else 
-		return ""
+		return nil
 	end
 end
 
 function appData:getState (key, isNumeric)
-	if appData.state[key] then 
-		return appData.state[key]
-	else 
-		print("[[appData]] State " .. key .. " not found, returning empty string")
-		if isNumeric then
-			return 0
-		else
-			return ""
-		end
-	end
+  if appData.state[key] then 
+    print("[[appData]] Getting state " .. key)
+    return appData.state[key]
+  elseif stateDefault[key] then
+    print("[[appData]] State " .. key .. " not found, returning default value")
+    return stateDefault[key]
+  else
+    print("[[appData]] State " .. key .. " or default value not found, returning empty string/number")
+    if isNumeric then
+      return 0
+    else
+      return ""
+    end
+  end
 end
 
 function appData:setState(key, val, saveState)
@@ -105,7 +101,10 @@ function appData:setState(key, val, saveState)
 	end
 end
 
-
+function appData:resetState()
+	appData.state = initData.stateDefault
+	appData:saveState()
+end
 
 
 
